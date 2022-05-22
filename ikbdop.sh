@@ -1,17 +1,82 @@
 #
-# USE: This simple shell program can be used to disable the internal keyboard of a laptop in case you want to use external keyboard. This can be done by
+# USE: This simple shell program can be used to disable the internal keyboard of a laptop. This can be done by
 # $ ./ikbdop.sh detach
 #
 # To attach the internal keyboard again, use the command
 # $ ./ikbdop.sh attach
 # 
+# You may choose to use the Desktop-Entry Files provided with this script for added simplicity / user friendlyness.
+# 
 # USAGE: When the internal laptop keyboard goes defective, it usually results in continuous generation of some keyboard character, thereby making it impossible to do any commandline stuff. This shell program is an easy fix.
+# USAGE: When the Device is a Convertible without a supported flip/tablet-mode-switch (like HP ENVY x360) the physical keyboard can be (de)activated at will.
+# 
+# Original Author: anitaggu@gmail.com
+# Additions/Edits by: contact@roeper-luke.de
 #
-#
-# Author: anitaggu@gmail.com
-#
+# PREREQUISITES
+# - install xinput (Xorg only, not recommended with XWayland) if not installed
+# - install libinput (wayland only) if not installed
+
 
 #!/bin/bash
+
+
+#-----------------------------------------------------
+# check_user()
+#
+# Checks if the user runing the script has 
+# administrative privileges on this system.
+#
+# RETURNS:
+# 0 when the user is root or equivalent
+# 1 when the user has sudo-privileges
+# 2 when the user is not privileged
+#-----------------------------------------------------
+
+check_user()
+{
+	#// TODO //
+	return 0
+}
+
+
+#-----------------------------------------------------
+# check_displayserver()
+#
+# ARGS: None
+#
+# Checks which display server is currently runing on 
+# the machine and reports result back as int.
+# 
+# RETURNS: 
+# 1 if no display server detected
+# 2 both Xorg and wayland detected
+# 3 if Xorg / x11 detected
+# 4 if wayland detected
+#-----------------------------------------------------
+
+check_displayserver()
+{
+	WAYLAND=$(pgrep wayland --count)
+	XORG=$(pgrep Xorg --count)
+	if [[ $WAYLAND GRT 0 ]]; then
+		if [[ $XORG GRT 0 ]]; then
+			#echo "both wayland and xorg display server detected"
+			return 2
+		else
+			#echo "wayland display server detected"
+			return 4
+		fi
+	else
+		if [[ $XORG GRT 0 ]]; then
+			#echo "xorg display server detected"
+			return 3
+		else
+			#echo "no running display server detected"
+			return 1
+		fi
+	fi
+}
 
 
 #-----------------------------------------------------
@@ -24,15 +89,72 @@
 #
 # RETURNS: Nothing
 #-----------------------------------------------------
+
 usage() 
 {
-	USAGE=`echo "$0 [status | detach | attach ]"`
-	if [  $# -ne 1 ]
+	if [[ $# -lt 1 || $# -gt 2 ]]
 	then
-		echo $USAGE
-		exit 1
+		echo "$0 ( status | detach | attach | help ) [ xorg | wayland ]"
+		exit 4
+	fi
+	
+	if [[ "$1" -eq "help" || "$1" -eq "--help" || "$1" -eq "-help" ]]; then
+		help
+		exit 0
+	fi
+	
+	if [[ "$1" -neq "status" && "$1" -neq "detach" && "$1" -neq "attach" && "$1" -neq "help" ]]; then
+		echo "Syntax error on first argument. For details see '$0 help'."
+		exit 4
+	fi
+	
+	if [[ "$2" -neq "xorg" && "$2" -neq "wayland" && "$2" -neq "" ]]; then
+		echo "Syntax error on second argument. For details see '$0 help'."
+		exit 4
 	fi
 }
+
+
+#-----------------------------------------------------
+# help()
+#
+# ARGS: None
+# 
+# Echos the program help to stdout
+#
+# RETURNS: Nothing
+#-----------------------------------------------------
+
+help()
+{
+	echo "This simple shell program can be used to disable the internal keyboard of a laptop."
+	echo ""
+	echo "Syntax: $0 ( status | detach | attach | help ) [ xorg | wayland ]"
+	echo ""
+	echo "Arguments:"
+	echo "  ( status | detach | attach | help )"
+	echo "    REQUIRED ARGUMENT"
+	echo "    - status: Output the current Keyboard status"
+	echo "    - detach: disable the internal keyboard"
+	echo "    - attach: re-enable the internal keyboard"
+	echo "    - help: display this help"
+	echo "  [ xorg | wayland ]"
+	echo "    OPTIONAL ARGUMENT"
+	echo "    - xorg: override the display server detection and try to disable the keyboard with xorg tools"
+	echo "    - wayland: override the display server detection and try to disable the keyboard with wayland tools (includes xwayland and possibly no running displayserver)"
+	echo ""
+	echo "Exit Codes:"
+	echo "  0: success (attach / detach successfull; keyboard already in the wanted state)"
+	echo "  1: the attachment or detachment failed"
+	echo "  2: no running display server detected"
+	echo "  3: detected both xorg and wayland running and no second argument given"
+	echo "  4: Command syntax error"
+}
+
+
+#-----------------------------------------------------
+# VARIABLES
+#-----------------------------------------------------
 
 readonly mode_attached=2
 readonly mode_detached=3
@@ -74,6 +196,28 @@ END {
 return $?
 }
 
+#-----------------------------------------------------------
+# find_status_wayland()
+#
+# ARGS: None
+#
+# Uses the output of libinput command to detect whether
+# keyboard attached or detached
+#
+# RETURNS: 
+# 2 if keyboard attached
+# 3 if keyboard dettached
+#-----------------------------------------------------------
+
+find_status_wayland() {
+
+# // TODO //
+
+
+return 0
+}
+
+
 #-------------------------------------------------------------
 # find_attached_kbd_id()
 #
@@ -97,14 +241,15 @@ find_attached_kbd_id()
 	return $?
 }
 
-#
+
+#-------------------------------------------------------------
 # find_detached_kbd_id()
 #
 # ARGS: None
 # PRE-CONDITION: The internal keyboard must be detached.
 # 
 # Function returns the device id
-#
+#-------------------------------------------------------------
 
 find_detached_kbd_id() 
 {
@@ -120,6 +265,14 @@ find_detached_kbd_id()
 		}'
 	return $?
 }
+
+
+#-------------------------------------------------------------
+# find_master_kbd_id()
+#
+# // TODO //
+# 
+#-------------------------------------------------------------
 
 find_master_kbd_id() 
 {
@@ -155,6 +308,18 @@ find_master_kbd_id()
 
 usage $*
 
+check_displayserver
+displayserver=$?
+if [[ "$2" -neq "" ]]; then
+	#continue
+elif [[ $displayserver -eq 1 ]]; then
+	echo "$0: No running display server detected, cannot decide how to disable input device. Maybe try 'wayland' as second argument. For futher details see '$0 help'."
+	exit 2
+elif [[ $displayserver -eq 2 ]]; then
+	echo "$0: Detected both Xorg and Wayland display server running simultaneously, please see '$0 help'."
+	exit 3
+fi
+
 case $1 in
 
 status) 
@@ -182,7 +347,9 @@ detach)
 	detach_cmd=`echo "xinput float $kbd_id"`
 	echo "Executing command: $detach_cmd"
 	$detach_cmd
-	exit $?	
+	if [[ $? -neq 0 ]]; then
+		exit 1
+	fi
 ;;
 
 attach)
@@ -203,7 +370,9 @@ attach)
 	attach_cmd=`echo "xinput reattach $kbd_id $masterid"`
 	echo "Executing command: $attach_cmd"
 	$attach_cmd
-	exit $?
+	if [[ $? -neq 0 ]]; then
+		exit 1
+	fi
 
 ;;
 
