@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+NoDisplay=false
+Terminal=false
+Exec=/usr/bin/sudo /home/USER/.local/bin/convertible-mode.sh enable
+Icon=/home/USER/.local/share/icons/hand-touching-tablet-screen.png
+Name=Convertible Mode
+Comment=Disables the internal Keyboard and Track-/Touchpad to allow a Convertible Device to flip without problems.
+Categories=Convertible
