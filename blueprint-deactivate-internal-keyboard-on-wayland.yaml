@@ -1,0 +1,79 @@
+#preparation:
+# - sudo groupadd convertible
+# - sudo usermod -a -G convertible $USER
+# - sudo mv convertible.tmp /etc/sudoers.d/convertible
+# - mv "Convertible Mode.desktop.tmp" "~/.local/share/applications/Convertible Mode.desktop"
+# - mv "Laptop Mode.desktop.tmp" "~/.local/share/applications/Laptop Mode.desktop"
+# - mkdir -p ~/.local/share/icons/
+# - mv "laptop.png.tmp" "~/.local/share/icons/laptop.png"
+# - mv "convertible-tablet.png.tmp" "~/.local/share/icons/convertible-tablet.png"
+# - mv activate-convertible-mode.sh.tmp ~/.local/bin/activate-convertible-mode.sh
+# - mv activate-laptop-mode.sh.tmp ~/.local/bin/activate-laptop-mode.sh
+
+
+0:
+ - Description: get keyboard details
+ - Command-wayland: $ sudo libinput list-devices | grep "AT Translated Set 2 keyboard"
+ - Output-wayland:
+     "Device:           AT Translated Set 2 keyboard
+     Kernel:           /dev/input/event3
+     Group:            9
+     Seat:             seat0, default
+     Capabilities:     keyboard 
+     Tap-to-click:     n/a
+     Tap-and-drag:     n/a
+     Tap drag lock:    n/a
+     Left-handed:      n/a
+     Nat.scrolling:    n/a
+     Middle emulation: n/a
+     Calibration:      n/a
+     Scroll methods:   none
+     Click methods:    none
+     Disable-w-typing: n/a
+     Accel profiles:   n/a
+     Rotation:         n/a"
+
+1:
+ - Description: check if wayland or Xorg is the running display server
+ - Command-wayland: $ pgrep wayland --list-name
+ - Command-xorg: $ pgrep Xorg --list-name
+ - Output-wayland:
+     "1775 gdm-wayland-ses
+     3617 Xwayland"
+
+2:
+ - Description: get count of wayland / Xorg servers running
+ - Command-wayland: $ pgrep wayland --count
+ - Command-xorg: $ pgrep Xorg --count
+ - Output-wayland: "1" or "2"
+ - Output-xorg: "1"
+
+3:
+ - Description: disable keyboard/touchpad
+ - Preparation-Wayland: 
+   - "sudo libinput list-devices | grep "AT Translated Set 2 keyboard | grep Kernel | awk '{print $2}'" --> get /dev/input/eventX
+   - "udevadm info --attribute-walk --path=$(udevadm info --query=path --name=/dev/input/eventX)" --> get /sys/devices/platform/i8042/serioX/input/inputX/
+ - Command-wayland: echo 1 > /sys/devices/platform/i8042/serioX/input/inputX/inhibited
+ - Command-xorg: 
+ - Output-wayland: 
+ - Output-xorg: 
+ 
+4:
+ - Description: enable keyboard/touchpad
+ - Preparation-Wayland: 
+   - "sudo libinput list-devices | grep "AT Translated Set 2 keyboard | grep Kernel | awk '{print $2}'" --> get /dev/input/eventX
+   - "udevadm info --attribute-walk --path=$(udevadm info --query=path --name=/dev/input/eventX)" --> get /sys/devices/platform/i8042/serioX/input/inputX/
+ - Command-wayland: echo 0 > /sys/devices/platform/i8042/serioX/input/inputX/inhibited
+ - Command-xorg: 
+ - Output-wayland: 
+ - Output-xorg: 
+ 
+5:
+ - Description: check keyboard/touchpad
+ - Preparation-Wayland: 
+   - "sudo libinput list-devices | grep "AT Translated Set 2 keyboard | grep Kernel | awk '{print $2}'" --> get /dev/input/eventX
+   - "udevadm info --attribute-walk --path=$(udevadm info --query=path --name=/dev/input/eventX)" --> get /sys/devices/platform/i8042/serioX/input/inputX/
+ - Command-wayland: cat /sys/devices/platform/i8042/serioX/input/inputX/inhibited --> 1 is inhibited, 0 is active
+ - Command-xorg: 
+ - Output-wayland: 
+ - Output-xorg: 
