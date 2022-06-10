@@ -28,7 +28,7 @@ If you know what to search for you can use for example `~$ sudo libinput list-de
 ![grafik](https://user-images.githubusercontent.com/29387023/173143378-e37d4f1e-9ffb-4b45-9054-2404da2e8c99.png)
 
 ### Get the /sys/devices/platform/[...]/input/inputX/inhibited path of the device
-Use `~$ sudo udevadm info --attribute-walk --path=$(udevadm info --query=path --name=/dev/input/event3) | grep --extended-regexp --regexp='looking at parent device .\/devices\/platform\/[A-Za-z0-9]+\/[A-Za-z0-9]+\/input\/input[0-9]+.:' | awk '{print $5}' | sed 's/://' | sed 's/^./\/sys/' | sed 's/.$/\/inhibited/'` to get the "/sys/devices/platform/[...]/input/inputX/inhibited"-Path 
+Use `~$ sudo udevadm info --attribute-walk --path=$(udevadm info --query=path --name=/dev/input/eventX) | grep --extended-regexp --regexp='looking at parent device .\/devices\/platform\/[A-Za-z0-9]+\/[A-Za-z0-9]+\/input\/input[0-9]+.:' | awk '{print $5}' | sed 's/://' | sed 's/^./\/sys/' | sed 's/.$/\/inhibited/'` to get the "/sys/devices/platform/[...]/input/inputX/inhibited"-Path 
 
 ![grafik](https://user-images.githubusercontent.com/29387023/173150787-969acfd6-c885-40a7-b601-29fc4f790f3d.png)
 
