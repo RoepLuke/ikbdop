@@ -1,0 +1,1 @@
+%convertible ALL=(root) NOPASSWD: /home/USER/.local/bin/convertible-mode.sh
