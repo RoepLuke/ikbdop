@@ -30,13 +30,22 @@
 # RETURNS:
 # 0 when the user is root or equivalent
 # 1 when the user has sudo-privileges
-# 2 when the user is not privileged
+# 2 when the user is not privileged or could not be detected
 #-----------------------------------------------------
 
 check_user()
 {
-	#// TODO //
-	return 0
+	exec_user=$(whoami)
+	sudoer_user=$(sudo -lU $exec_user | grep --after-context 10 $(hostname --short))
+	sudoer_all_users=$(echo $sudoer_user | grep "(ALL) ALL")
+	sudoer_only_root=$(echo $sudoer_user | grep "(root) ALL")
+	if [[ "$exec_user" == "root" ]]; then
+		return 0
+	elif [[ "$sudoer_all_users" != "" || "$sudoer_only_root" != "" ]]; then
+		return 1
+	else
+		return 2
+	fi
 }
 
 
