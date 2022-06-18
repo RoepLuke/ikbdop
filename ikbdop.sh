@@ -170,7 +170,10 @@ readonly mode_detached=3
 readonly attach_pattern='AT Translated Set 2 keyboard[[:space:]]*id=[[:digit:]]*[[:space:]]*\[slave  keyboard \([[:digit:]]*\)\]'
 readonly detach_pattern='AT Translated Set 2 keyboard[[:space:]]*id=[[:digit:]]*[[:space:]]*\[floating slave\]'
 readonly masterkbd_pattern='\[slave[[:space:]]*keyboard[[:space:]]*\([[:digit:]]*\)\]'
-
+readonly wayland_device_name_internal_keyboard='AT Translated Set 2 keyboard'
+readonly wayland_device_name_internal_touchpad='SynPS/2 Synaptics TouchPad'
+wayland_device_inhibited_internal_keyboard=""
+wayland_device_inhibited_internal_touchpad=""
 
 #-----------------------------------------------------------
 # find_status()
@@ -226,6 +229,25 @@ find_status_wayland() {
 return 0
 }
 
+#-------------------------------------------------------------
+# find_attached_devices_wayland()
+#
+# ARGS: None
+# PRE-CONDITION: The internal keyboard / touchpad must be attached.
+# RETURNS: nothing
+#-------------------------------------------------------------
+
+find_attached_devices_wayland() {
+	
+	## Get /dev/input/eventX Path for internal keyboard and touchpad
+	#wayland_dev-input-event_path_internal_keyboard="$(libinput list-devices | grep --after-context 1 ""$wayland_device_name_internal_keyboard"" | grep Kernel | awk '{print $2}')"
+	#wayland_dev-input-event_path_internal_touchpad=$(libinput list-devices | grep --after-context 1 "$wayland_device_name_internal_touchpad" | grep Kernel | awk '{print $2}')
+	
+	# Get /sys/devices/platform/[...]/[...]/input/inputX/inhibited Path for internal keyboard and touchpad
+	#wayland_sys-devices-platform_path_internal_keyboard=$(udevadm info --attribute-walk --path=$(udevadm info --query=path --name=$wayland_dev-input-event_path_internal_keyboard) | grep --extended-regexp --regexp='looking at parent device .\/devices\/platform\/[A-Za-z0-9]+\/[A-Za-z0-9]+\/input\/input[0-9]+.:' | awk '{print $5}' | sed 's/://' | sed 's/^./\/sys/' | sed 's/.$/\/inhibited/')
+	#wayland_sys-devices-platform_path_internal_touchpad=$(udevadm info --attribute-walk --path=$(udevadm info --query=path --name=/dev/input/eventX) | grep --extended-regexp --regexp='looking at parent device .\/devices\/platform\/[A-Za-z0-9]+\/[A-Za-z0-9]+\/input\/input[0-9]+.:' | awk '{print $5}' | sed 's/://' | sed 's/^./\/sys/' | sed 's/.$/\/inhibited/')
+	
+}
 
 #-------------------------------------------------------------
 # find_attached_kbd_id()
